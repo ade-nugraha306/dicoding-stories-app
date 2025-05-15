@@ -17,7 +17,7 @@ export default defineConfig({
   },
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       strategies: 'injectManifest',
       injectManifest: {
         swSrc: resolve(__dirname, 'src/public/sw.js'),
@@ -32,7 +32,8 @@ export default defineConfig({
         theme_color: '#3498db',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/',
+        start_url: './',
+        scope: './',
         icons: [
           {
             src: 'pwa-192x192.png',
