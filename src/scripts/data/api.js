@@ -230,8 +230,8 @@ export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    // Use a relative path instead of absolute path
-    const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
+    // Perbaikan path agar berfungsi baik di localhost maupun di Netlify
+    const swPath = new URL('/sw.js', window.location.href).pathname;
     const registration = await navigator.serviceWorker.register(swPath);
     console.log('Service Worker registered', registration);
 
@@ -252,6 +252,7 @@ export async function subscribeUserToPush(registration) {
     if (Notification.permission !== 'granted') {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
+        console.error('Notifikasi ditolak oleh pengguna');
         throw new Error('Notification permission denied');
       }
     }
@@ -264,9 +265,10 @@ export async function subscribeUserToPush(registration) {
     }
     
     // Log debug info
-    console.log('Attempting to subscribe user to push...');
+    console.log('Attempting to subscribe user to push...', registration);
     
     try {
+      console.log('Registering with applicationServerKey...');
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: convertBase64ToUint8Array('BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk')
@@ -294,6 +296,7 @@ export async function subscribeUserToPush(registration) {
         return;
       }
 
+      console.log('Mengirim data subscription ke server...');
       const response = await fetch(ENDPOINTS.NOTIFICATION, {
         method: 'POST',
         headers: {
@@ -311,15 +314,16 @@ export async function subscribeUserToPush(registration) {
       
       console.log('Successfully subscribed to push notifications');
     } catch (subscribeError) {
-      console.error('Push subscription error:', subscribeError);
+      console.error('Push subscription error detail:', subscribeError.message, subscribeError.stack);
       // If it's a DOMException, it might be due to using an unsecured origin
       if (subscribeError.name === 'NotAllowedError') {
+        console.error('Push tidak bisa di HTTP, harus HTTPS');
         throw new Error('Push subscription requires HTTPS. Make sure you are on a secure connection.');
       }
       throw subscribeError;
     }
   } catch (error) {
-    console.error('Failed to subscribe the user: ', error);
+    console.error('Failed to subscribe the user: ', error.message, error.stack);
     throw error;
   }
 }

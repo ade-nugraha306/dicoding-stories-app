@@ -52,7 +52,18 @@ async function setupPushButton() {
       return;
     }
     
-    const registration = await navigator.serviceWorker.ready;
+    // Pastikan service worker benar-benar terdaftar
+    let registration;
+    try {
+      registration = await navigator.serviceWorker.ready;
+      console.log('Service worker siap:', registration);
+    } catch (error) {
+      console.error('Service worker belum siap, mencoba mendaftarkan ulang:', error);
+      // Coba ulang pendaftaran dengan path absolut
+      const swUrl = new URL('/sw.js', window.location.href).href;
+      registration = await navigator.serviceWorker.register(swUrl);
+      console.log('Service worker berhasil didaftarkan:', registration);
+    }
 
     async function updateButton() {
       try {
@@ -77,6 +88,7 @@ async function setupPushButton() {
         }
       } catch (error) {
         console.error('Push subscription error:', error);
+        alert('Gagal melakukan subscribe: ' + error.message);
       } finally {
         await updateButton();
       }
