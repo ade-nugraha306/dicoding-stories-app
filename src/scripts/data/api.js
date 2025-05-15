@@ -230,7 +230,9 @@ export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    // Use a relative path instead of absolute path
+    const swPath = window.location.pathname.endsWith('/') ? 'sw.js' : './sw.js';
+    const registration = await navigator.serviceWorker.register(swPath);
     console.log('Service Worker registered', registration);
 
     // Pastikan permission granted sebelum subscribe
@@ -246,46 +248,79 @@ export async function registerServiceWorker() {
 
 export async function subscribeUserToPush(registration) {
   try {
+    // Check for notification permission
+    if (Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        throw new Error('Notification permission denied');
+      }
+    }
+
+    // Check for existing subscription
     const existing = await registration.pushManager.getSubscription();
     if (existing) {
       console.log('Already subscribed:', existing);
       return;
     }
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: convertBase64ToUint8Array('BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk')
-    });
+    
+    // Log debug info
+    console.log('Attempting to subscribe user to push...');
+    
+    try {
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertBase64ToUint8Array('BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk')
+      });
 
-    console.log('User is subscribed:', subscription);
+      console.log('User is subscribed:', subscription);
 
-    // Ekstrak keys manual
-    function arrayBufferToBase64(buffer) {
-      return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
-    }
-
-    const sub = {
-      endpoint: subscription.endpoint,
-      keys: {
-        p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-        auth: arrayBufferToBase64(subscription.getKey('auth'))
+      // Ekstrak keys manual
+      function arrayBufferToBase64(buffer) {
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
       }
-    };
 
-    const response = await fetch(ENDPOINTS.NOTIFICATION, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${TokenManager.getToken()}`
-      },
-      body: JSON.stringify(sub)
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Push subscribe error:', errorData);
-      throw new Error(errorData.message || `HTTP ${response.status}`);
+      const sub = {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+          auth: arrayBufferToBase64(subscription.getKey('auth'))
+        }
+      };
+
+      // Only send to server if we have a token
+      const token = TokenManager.getToken();
+      if (!token) {
+        console.log('No authentication token found, skipping server registration');
+        return;
+      }
+
+      const response = await fetch(ENDPOINTS.NOTIFICATION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(sub)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Push subscribe error:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+      
+      console.log('Successfully subscribed to push notifications');
+    } catch (subscribeError) {
+      console.error('Push subscription error:', subscribeError);
+      // If it's a DOMException, it might be due to using an unsecured origin
+      if (subscribeError.name === 'NotAllowedError') {
+        throw new Error('Push subscription requires HTTPS. Make sure you are on a secure connection.');
+      }
+      throw subscribeError;
     }
   } catch (error) {
     console.error('Failed to subscribe the user: ', error);
+    throw error;
   }
 }
 
