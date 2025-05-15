@@ -7,7 +7,12 @@ import { registerServiceWorker, isUserSubscribed, subscribeUserToPush, unsubscri
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    await registerServiceWorker();
+    console.log('App starting...');
+    
+    // Daftarkan service worker dan tunggu pendaftarannya selesai
+    const swRegistration = await registerServiceWorker();
+    console.log('Service worker registration result:', swRegistration);
+    
     // Inisialisasi App SPA
     const app = new App({
       content: document.querySelector('#main-content'),
@@ -34,14 +39,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
     
-    // Setup push notification button
-    setupPushButton();
+    // Setup push notification button dengan service worker yang sudah terdaftar
+    await setupPushButton(swRegistration);
   } catch (error) {
     console.error('Error initializing app:', error);
+    alert('Terjadi kesalahan: ' + error.message);
   }
 });
 
-async function setupPushButton() {
+async function setupPushButton(serviceWorkerReg) {
   try {
     console.log('Starting setupPushButton');
     alert('Starting to setup Push Button');
@@ -63,28 +69,24 @@ async function setupPushButton() {
       return;
     }
     
-    // Pastikan service worker benar-benar terdaftar
-    let registration;
-    try {
-      registration = await navigator.serviceWorker.ready;
-      console.log('Service worker siap:', registration);
-      alert('Service Worker is ready');
-    } catch (error) {
-      console.error('Service worker belum siap, mencoba mendaftarkan ulang:', error);
-      alert('Service Worker not ready, trying to register again: ' + error.message);
-      // Coba ulang pendaftaran dengan path absolut
+    // Gunakan service worker registration yang diberikan atau tunggu yang sudah aktif
+    let registration = serviceWorkerReg;
+    if (!registration) {
       try {
-        const swUrl = new URL('/sw.js', window.location.href).href;
-        console.log('Registering service worker with URL:', swUrl);
-        registration = await navigator.serviceWorker.register(swUrl);
-        console.log('Service worker berhasil didaftarkan:', registration);
-        alert('Service Worker registered successfully');
-      } catch (regError) {
-        console.error('Failed to register service worker:', regError);
-        alert('Failed to register service worker: ' + regError.message);
+        console.log('No SW registration provided, waiting for active SW...');
+        registration = await navigator.serviceWorker.ready;
+        console.log('Got active service worker:', registration);
+      } catch (error) {
+        console.error('Failed to get service worker registration:', error);
+        alert('Service worker tidak siap: ' + error.message);
+        btn.textContent = 'SW Error';
+        btn.disabled = true;
         return;
       }
     }
+    
+    console.log('Using service worker registration:', registration);
+    alert('Service Worker is ready');
 
     async function updateButton() {
       try {
@@ -102,12 +104,12 @@ async function setupPushButton() {
       }
     }
 
-    btn.addEventListener('click', async (event) => {
+    // Gunakan event listener berbasis click
+    btn.onclick = async (event) => {
       try {
-        console.log('Button clicked!');
+        console.log('Button clicked!', event);
         alert('Push button clicked!');
         event.preventDefault();
-        event.stopPropagation();
         
         btn.disabled = true; // Disable tombol saat proses
         const subscribed = await isUserSubscribed();
@@ -126,10 +128,9 @@ async function setupPushButton() {
       } finally {
         await updateButton();
       }
-    });
+    };
 
-    console.log('Adding button click listener done');
-    alert('Button click handler added');
+    console.log('Setting up button click handler using onclick');
     await updateButton();
   } catch (error) {
     console.error('Push button setup error:', error);

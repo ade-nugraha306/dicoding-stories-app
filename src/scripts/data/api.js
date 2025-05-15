@@ -227,22 +227,42 @@ export function isAuthenticated() {
   return TokenManager.hasToken();
 }
 export async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Worker tidak didukung di browser ini');
+    return;
+  }
 
   try {
-    // Perbaikan path agar berfungsi baik di localhost maupun di Netlify
-    const swPath = new URL('/sw.js', window.location.href).pathname;
-    const registration = await navigator.serviceWorker.register(swPath);
-    console.log('Service Worker registered', registration);
+    // Coba dengan path absolut, akan di-resolve relatif terhadap base URL
+    const swUrl = '/sw.js';
+    console.log('Registering service worker at:', swUrl);
+    
+    const registration = await navigator.serviceWorker.register(swUrl, {
+      scope: '/'
+    });
+    
+    console.log('Service Worker registered successfully:', registration);
 
     // Pastikan permission granted sebelum subscribe
     if (Notification.permission !== 'granted') {
-      await Notification.requestPermission();
+      const permission = await Notification.requestPermission();
+      console.log('Notification permission:', permission);
     }
 
-    // Jangan auto-subscribe di sini!
+    return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);
+    
+    // Coba lagi dengan path relatif sebagai fallback
+    try {
+      console.log('Trying fallback registration with relative path...');
+      const registration = await navigator.serviceWorker.register('./sw.js');
+      console.log('Service Worker fallback registration succeeded:', registration);
+      return registration;
+    } catch (fallbackError) {
+      console.error('Service Worker fallback registration also failed:', fallbackError);
+      throw error; // Lempar error asli
+    }
   }
 }
 

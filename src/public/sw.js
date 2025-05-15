@@ -26,18 +26,22 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.png',
-  '/scripts/index.js',
-  '/styles/styles.css',
-  '/fallback-image.png',
-  'https://unpkg.com/leaflet/dist/leaflet.css',
-  'https://unpkg.com/leaflet/dist/leaflet.js',
+  '/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      console.log('Caching static assets');
+      // Gunakan Promise.all untuk menangani kegagalan cache individual
+      return Promise.allSettled(
+        STATIC_ASSETS.map(url => 
+          cache.add(url).catch(error => {
+            console.warn(`Failed to cache ${url}: ${error.message}`);
+            return null; // Lanjutkan meskipun ada error
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -57,46 +61,53 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Handler khusus untuk gambar
-  if (event.request.destination === 'image') {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
-            // Cache SEMUA gambar, baik dari origin sendiri maupun eksternal
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        }).catch(() => {
-          // Fallback image jika offline dan gambar belum pernah di-cache
-          return caches.match('/fallback-image.png');
-        });
-      })
-    );
+  // Tidak perlu handle fetch untuk requests dari CDN atau pihak ketiga
+  if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // Handler fetch lain (HTML, JS, CSS, dsb)
+  // Handler fetch untuk semua asset
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).then((response) => {
-          if (event.request.url.startsWith(self.location.origin)) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, response.clone());
-            });
+      if (cached) {
+        return cached;
+      }
+      
+      return fetch(event.request)
+        .then((response) => {
+          // Hanya cache response yang valid
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
           }
+
+          // Clone response untuk disimpan ke cache
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(event.request, responseToCache);
+            })
+            .catch(error => {
+              console.warn('Failed to cache response:', error);
+            });
+
           return response;
-        }).catch(() => {
+        })
+        .catch((error) => {
+          console.error('Fetch failed:', error);
+          
+          // Jika request adalah untuk dokumen HTML, kembalikan index.html
           if (event.request.destination === 'document') {
             return caches.match('/index.html');
           }
-        })
-      );
+          
+          // Jika request untuk gambar, kembalikan fallback gambar jika ada
+          if (event.request.destination === 'image') {
+            return caches.match('/favicon.png');
+          }
+          
+          // Jika tidak ada handler khusus, lempar error kembali
+          throw error;
+        });
     })
   );
 });
