@@ -36,14 +36,14 @@ export default class HomePage {
         storiesContainer.innerHTML = '<div class="error-message">Tidak ada data offline yang tersimpan.</div>';
         return;
       } else {
-        storiesContainer.innerHTML = '<div class="error-message">Menampilkan data dari cache (offline)</div>';
+        storiesContainer.innerHTML = '<div class="offline-notice">Menampilkan data dari cache (offline mode)</div>';
       }
     }
     stories.forEach((story) => {
       const storyItem = document.createElement("div");
       storyItem.classList.add("story-item");
       storyItem.innerHTML = `
-        <img src="${story.photoUrl}" alt="${story.name}" />
+        <img src="${story.photoUrl}" alt="${story.name}" onerror="this.src='/favicon.png'; this.alt='Image not available offline';" />
         <h3>${story.name}</h3>
         <p>${story.description}</p>
         <p>Created At: ${new Date(story.createdAt).toLocaleString()}</p>
@@ -60,9 +60,37 @@ export default class HomePage {
     });
   }
 
+  showOfflineMapMessage() {
+    const mapContainer = document.getElementById("map");
+    if (mapContainer) {
+      mapContainer.innerHTML = `
+        <div class="offline-map-message">
+          <h3>Map tidak tersedia dalam mode offline</h3>
+          <p>Koneksi internet diperlukan untuk menampilkan peta.</p>
+        </div>
+      `;
+      mapContainer.style.display = 'flex';
+      mapContainer.style.justifyContent = 'center';
+      mapContainer.style.alignItems = 'center';
+      mapContainer.style.backgroundColor = '#f8f9fa';
+      mapContainer.style.border = '1px solid #ddd';
+      mapContainer.style.borderRadius = '8px';
+      mapContainer.style.padding = '20px';
+      mapContainer.style.textAlign = 'center';
+    }
+  }
+
   initializeMap() {
+    // Clear any offline message first
+    const mapContainer = document.getElementById("map");
+    if (mapContainer) {
+      mapContainer.innerHTML = '';
+      mapContainer.style = ''; // Reset styles
+    }
+    
     if (!window.L) {
       console.error("Leaflet library not loaded!");
+      this.showOfflineMapMessage();
       return;
     }
 

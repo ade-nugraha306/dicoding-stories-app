@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await setupPushButton(swRegistration);
   } catch (error) {
     console.error('Error initializing app:', error);
-    alert('Terjadi kesalahan: ' + error.message);
   }
 });
 
@@ -172,7 +171,6 @@ async function setupPushButton(serviceWorkerReg) {
           }
         } catch (error) {
           console.error('Push subscription error:', error);
-          alert('Push error: ' + error.message);
         } finally {
           await updateButton();
         }

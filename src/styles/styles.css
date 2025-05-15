@@ -689,3 +689,24 @@ header {
     font-size: 0.9rem;
   }
 }
+
+.offline-notice {
+  font-size: 0.9rem;
+  color: #2c3e50;
+  margin: 20px 0;
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #d6eaf8;
+  border: 1px solid #3498db;
+}
+
+.offline-map-message {
+  color: #7f8c8d;
+  max-width: 100%;
+}
+
+.offline-map-message h3 {
+  color: #34495e;
+  margin-bottom: 8px;
+}
