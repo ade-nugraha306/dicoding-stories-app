@@ -21,15 +21,19 @@ if (typeof workbox !== 'undefined') {
   console.log('Workbox gagal dimuat!');
 }
 
-const CACHE_NAME = 'stories-app-cache-v1';
+// Pastikan versi cache unik agar aktivasi baru selalu terjadi
+const CACHE_NAME = 'stories-app-cache-v2'; // Ubah versi cache
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/favicon.png'
+  '/manifest.json'
 ];
 
+// Log untuk debugging
+console.log('Service Worker initialized with cache:', CACHE_NAME);
+
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Caching static assets');
@@ -41,21 +45,36 @@ self.addEventListener('install', (event) => {
             return null; // Lanjutkan meskipun ada error
           })
         )
-      );
+      ).then(() => {
+        console.log('Static assets cached successfully');
+      });
     })
   );
+  // Aktifkan service worker baru segera
   self.skipWaiting();
+  console.log('skipWaiting called - new worker will activate soon');
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
   event.waitUntil(
+    // Hapus cache lama
     caches.keys().then((cacheNames) => {
+      console.log('Found caches:', cacheNames);
       return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => {
+            console.log(`Deleting old cache: ${name}`);
+            return caches.delete(name);
+          })
       );
+    }).then(() => {
+      console.log('Service Worker activated and old caches deleted');
+      // Ambil alih klien yang ada tanpa reload
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -126,4 +145,14 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, data.options)
   );
+});
+
+// Tambahkan listener untuk error
+self.addEventListener('error', (event) => {
+  console.error('Service Worker error:', event.message, event.filename, event.lineno);
+});
+
+// Tambahkan listener untuk unhandled rejection
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Service Worker unhandled rejection:', event.reason);
 });

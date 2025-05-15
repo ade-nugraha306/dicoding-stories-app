@@ -232,16 +232,44 @@ export async function registerServiceWorker() {
     return;
   }
 
+  // Periksa dulu apakah ada service worker yang redundant, hapus jika ada
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  for (const registration of registrations) {
+    if (registration.installing === null && 
+        registration.waiting === null && 
+        registration.active === null) {
+      console.log('Found redundant service worker, unregistering');
+      await registration.unregister();
+    }
+  }
+
   try {
     // Coba dengan path absolut, akan di-resolve relatif terhadap base URL
     const swUrl = '/sw.js';
     console.log('Registering service worker at:', swUrl);
     
     const registration = await navigator.serviceWorker.register(swUrl, {
-      scope: '/'
+      scope: '/',
+      updateViaCache: 'none' // Jangan gunakan cache untuk update service worker
     });
     
     console.log('Service Worker registered successfully:', registration);
+
+    // Pastikan service worker diaktifkan dan tidak redundant
+    if (registration.active) {
+      console.log('Service worker active state:', registration.active.state);
+    } else if (registration.installing) {
+      console.log('Service worker installing', registration.installing.state);
+      // Tunggu sampai selesai instalasi
+      await new Promise(resolve => {
+        registration.installing.addEventListener('statechange', (e) => {
+          console.log('Service worker state changed to:', e.target.state);
+          if (e.target.state === 'activated') {
+            resolve();
+          }
+        });
+      });
+    }
 
     // Pastikan permission granted sebelum subscribe
     if (Notification.permission !== 'granted') {
@@ -256,7 +284,9 @@ export async function registerServiceWorker() {
     // Coba lagi dengan path relatif sebagai fallback
     try {
       console.log('Trying fallback registration with relative path...');
-      const registration = await navigator.serviceWorker.register('./sw.js');
+      const registration = await navigator.serviceWorker.register('./sw.js', {
+        updateViaCache: 'none'
+      });
       console.log('Service Worker fallback registration succeeded:', registration);
       return registration;
     } catch (fallbackError) {

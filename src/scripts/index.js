@@ -9,9 +9,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     console.log('App starting...');
     
+    // Bersihkan service worker lama jika ada
+    await cleanupServiceWorkers();
+    
     // Daftarkan service worker dan tunggu pendaftarannya selesai
     const swRegistration = await registerServiceWorker();
     console.log('Service worker registration result:', swRegistration);
+    
+    // Periksa pembaruan service worker
+    if (swRegistration && 'update' in swRegistration) {
+      console.log('Checking for SW updates...');
+      try {
+        await swRegistration.update();
+        console.log('Service worker update check completed');
+      } catch (updateError) {
+        console.warn('Service worker update check failed:', updateError);
+      }
+    }
     
     // Inisialisasi App SPA
     const app = new App({
@@ -47,25 +61,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Fungsi untuk membersihkan service worker redundant
+async function cleanupServiceWorkers() {
+  if (!('serviceWorker' in navigator)) return;
+  
+  console.log('Checking for redundant service workers...');
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  
+  for (const registration of registrations) {
+    console.log('Found service worker:', registration);
+    
+    // Cek status registration
+    if (registration.installing === null && 
+        registration.waiting === null &&
+        registration.active === null) {
+      console.warn('Found redundant worker, unregistering');
+      await registration.unregister();
+      console.log('Redundant worker unregistered');
+    }
+  }
+}
+
 async function setupPushButton(serviceWorkerReg) {
   try {
     console.log('Starting setupPushButton');
-    alert('Starting to setup Push Button');
     
     const btn = document.getElementById('push-toggle-btn');
     if (!btn) {
       console.error('Button element not found!');
-      alert('Push Button not found in DOM!');
       return;
     }
     
     console.log('Button found:', btn);
-    alert('Push Button found in DOM');
     
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       btn.textContent = 'Push Not Supported';
       btn.disabled = true;
-      alert('Push API not supported in this browser');
       return;
     }
     
@@ -78,15 +109,34 @@ async function setupPushButton(serviceWorkerReg) {
         console.log('Got active service worker:', registration);
       } catch (error) {
         console.error('Failed to get service worker registration:', error);
-        alert('Service worker tidak siap: ' + error.message);
         btn.textContent = 'SW Error';
         btn.disabled = true;
         return;
       }
     }
     
-    console.log('Using service worker registration:', registration);
-    alert('Service Worker is ready');
+    // Periksa service worker state
+    if (registration.active) {
+      console.log('Active SW state:', registration.active.state);
+    } else {
+      console.warn('No active service worker found');
+      
+      // Tunggu jika ada yang masih installing
+      if (registration.installing) {
+        console.log('Waiting for service worker to be installed...');
+        await new Promise(resolve => {
+          registration.installing.addEventListener('statechange', event => {
+            console.log('Service worker state changed:', event.target.state);
+            if (event.target.state === 'activated') {
+              resolve();
+            }
+          });
+        });
+        console.log('Service worker now active');
+      } else {
+        console.error('No installing worker, push notifications may not work');
+      }
+    }
 
     async function updateButton() {
       try {
@@ -95,45 +145,46 @@ async function setupPushButton(serviceWorkerReg) {
         console.log('User subscription status:', subscribed);
         btn.textContent = subscribed ? 'Unsubscribe' : 'Subscribe';
         btn.disabled = false;
-        alert('Button updated: ' + (subscribed ? 'Unsubscribe' : 'Subscribe'));
       } catch (error) {
         console.error('Error updating button:', error);
-        alert('Error updating button: ' + error.message);
         btn.textContent = 'Subscribe';
         btn.disabled = false;
       }
     }
 
-    // Gunakan event listener berbasis click
-    btn.onclick = async (event) => {
-      try {
-        console.log('Button clicked!', event);
-        alert('Push button clicked!');
-        event.preventDefault();
-        
-        btn.disabled = true; // Disable tombol saat proses
-        const subscribed = await isUserSubscribed();
-        if (subscribed) {
-          console.log('Unsubscribing user...');
-          alert('Attempting to unsubscribe...');
-          await unsubscribeUserFromPush();
-        } else {
-          console.log('Subscribing user...');
-          alert('Attempting to subscribe...');
-          await subscribeUserToPush(registration);
+    // Tambahkan listener langsung ke elemen button
+    if (btn.getAttribute('data-listener-added') !== 'true') {
+      btn.setAttribute('data-listener-added', 'true');
+      
+      btn.addEventListener('click', async function buttonClickHandler(event) {
+        try {
+          console.log('Button clicked!', event);
+          event.preventDefault();
+          
+          btn.disabled = true; // Disable tombol saat proses
+          const subscribed = await isUserSubscribed();
+          if (subscribed) {
+            console.log('Unsubscribing user...');
+            await unsubscribeUserFromPush();
+          } else {
+            console.log('Subscribing user...');
+            await subscribeUserToPush(registration);
+          }
+        } catch (error) {
+          console.error('Push subscription error:', error);
+          alert('Push error: ' + error.message);
+        } finally {
+          await updateButton();
         }
-      } catch (error) {
-        console.error('Push subscription error:', error);
-        alert('Push subscription error: ' + error.message);
-      } finally {
-        await updateButton();
-      }
-    };
+      });
+      
+      console.log('Button click handler added');
+    } else {
+      console.log('Button listener already added');
+    }
 
-    console.log('Setting up button click handler using onclick');
     await updateButton();
   } catch (error) {
     console.error('Push button setup error:', error);
-    alert('Push button setup error: ' + error.message);
   }
 }
