@@ -17,7 +17,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <script type="module" src="/scripts/index.js"></script>
-    <link rel="manifest" href="/public/manifest.json" />
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
   </head>
   <body>
     <header>
@@ -31,11 +31,11 @@
             <li><a href="#/about">About</a></li>
             <li><a href="#/login" id="login-link">Login</a></li>
             <li><a href="#/addstory">Tambah Story</a></li>
-            <li><button id="push-toggle-btn">Subscribe</button></li>
           </ul>
         </nav>
 
         <button id="drawer-button" class="drawer-button">☰</button>
+        <button id="push-toggle-btn">Subscribe</button>
       </div>
     </header>
 
