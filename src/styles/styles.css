@@ -1,0 +1,687 @@
+* {
+  margin: 0;
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+}
+
+.container {
+  padding-inline: 32px;
+  margin-inline: auto;
+  max-width: 1300px;
+}
+
+header {
+  background-color: lightskyblue;
+}
+
+.main-header {
+  min-height: 90px;
+  padding-block: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.brand-name {
+  font-size: 1.125rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+}
+
+.navigation-drawer {
+  min-height: 100vh;
+  width: 200px;
+  padding: 20px 10px;
+  background-color: #fff;
+
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+
+  box-shadow: 0 0 4px 2px #00000033;
+  transform: translateX(-100%);
+  transition: transform 350ms;
+
+  z-index: 9999;
+}
+
+.navigation-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-button {
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+
+  display: inline-block;
+  background-color: transparent;
+
+  font-weight: bold;
+  font-size: 28px;
+  color: #141e16;
+
+  cursor: pointer;
+}
+
+.nav-list {
+  list-style: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px 20px;
+}
+
+.nav-list li a {
+  padding: 6px 10px;
+
+  display: block;
+
+  color: #333;
+  text-decoration: none;
+}
+
+.nav-list li a:hover {
+  text-decoration: underline;
+}
+
+/* MAIN */
+.main-content {
+  padding-block: 20px;
+}
+/* Container utama */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+  min-height: 70vh;
+}
+
+/* Judul */
+.login-container h1 {
+  font-size: 2rem;
+  color: #3498db;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Form */
+.login-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Form group (sama dengan register) */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+/* Input fields (sama dengan register) */
+.form-group input {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Tombol (sama dengan register) */
+.primary-button {
+  padding: 14px;
+  font-size: 1.1rem;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.primary-button:hover {
+  background-color: #2980b9;
+}
+
+.primary-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* Link (sama dengan register) */
+.secondary-button {
+  font-size: 0.9rem;
+  color: #3498db;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.secondary-button:hover {
+  text-decoration: underline;
+}
+
+/* Pesan error */
+.error-message {
+  font-size: 0.9rem;
+  color: #e74c3c;
+  margin-top: 20px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #fadbd8;
+}
+
+.error-message.hidden {
+  display: none;
+}
+
+/* Teks tambahan */
+.login-container p {
+  text-align: center;
+  margin-top: 10px;
+  color: #555;
+}
+/* .register-container */
+.register-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.register-container h1 {
+  font-size: 2rem;
+  color: #3498db;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Gunakan class yang sama untuk form-group di semua form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.form-group input {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Gunakan class button yang konsisten */
+.primary-button {
+  padding: 14px;
+  font-size: 1.1rem;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.primary-button:hover {
+  background-color: #2980b9;
+}
+
+.secondary-button {
+  font-size: 0.9rem;
+  color: #3498db;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.secondary-button:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  font-size: 0.9rem;
+  color: #e74c3c;
+  margin-top: 20px;
+  text-align: center;
+}
+
+#stories-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Styling untuk setiap item cerita */
+.story-item {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fafafa;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.story-item img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.story-item h3 {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.story-item p {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* Container utama */
+.add-story-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.add-story-container h1 {
+  font-size: 2rem;
+  color: #3498db;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Form */
+#add-story-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Form group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+/* Label */
+#add-story-form label {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Textarea */
+#description {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  min-height: 100px;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+#description:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+/* Camera section */
+#camera-stream {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+}
+
+#snapshot-canvas {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+}
+
+/* Buttons */
+#capture-btn,
+#add-story-form button[type="submit"] {
+  padding: 12px;
+  font-size: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#capture-btn:hover,
+#add-story-form button[type="submit"]:hover {
+  background-color: #2980b9;
+}
+
+#capture-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* File input */
+#photo {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+/* Coordinate inputs */
+#lat,
+#lon {
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Tombol Subscribe/Unsubscribe Push Notification */
+#push-toggle-btn {
+  padding: 10px 24px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #3498db;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 1em 0;
+}
+#push-toggle-btn:hover:not(:disabled) {
+  background: #217dbb;
+}
+#push-toggle-btn:disabled {
+  background: #b0c4de;
+  color: #eee;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  #push-toggle-btn {
+    padding: 14px 0;
+    font-size: 1.15rem;
+    width: 100%;
+    display: block;
+    margin: 1em 0;
+  }
+}
+@media (max-width: 400px) {
+  #push-toggle-btn {
+    font-size: 0.95rem;
+    padding: 10px 0;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+  animation-timing-function: ease;
+}
+/* Breakpoint untuk tablet (768px - 1024px) */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  .main-header {
+    padding: 15px 20px;
+    flex-wrap: wrap;
+  }
+
+  .navigation-drawer {
+    width: 80%;
+  }
+
+  .login-container,
+  .register-container,
+  .add-story-container {
+    max-width: 80%;
+    padding: 25px;
+  }
+
+  #stories-list {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .story-item {
+    padding: 15px;
+  }
+
+  .form-group input,
+  textarea {
+    padding: 14px;
+  }
+
+  .primary-button {
+    padding: 14px 20px;
+  }
+}
+
+/* Breakpoint untuk desktop (> 1024px) */
+@media screen and (min-width: 1025px) {
+  .navigation-drawer {
+    min-height: auto;
+    width: auto;
+    padding: 0;
+    background-color: transparent;
+    position: static;
+    box-shadow: none;
+    transform: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 25px;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .nav-list li a {
+    display: inline-block;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+  }
+
+  .nav-list li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .drawer-button {
+    display: none;
+  }
+
+  .main-header {
+    padding: 20px 40px;
+  }
+
+  #stories-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+  }
+
+  .story-item {
+    padding: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .story-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Breakpoint untuk mobile (< 768px) */
+@media screen and (max-width: 767px) {
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px 20px;
+  }
+
+  .brand-name {
+    font-size: 1.3rem;
+  }
+
+  .login-container,
+  .register-container,
+  .add-story-container {
+    padding: 15px;
+    max-width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group input,
+  textarea,
+  .primary-button,
+  .secondary-button {
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  #stories-list {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .story-item {
+    padding: 15px;
+  }
+
+  #camera-stream,
+  #snapshot-canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #capture-btn {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .navigation-drawer {
+    width: 75%;
+  }
+}
+
+/* Breakpoint untuk perangkat sangat kecil (< 400px) */
+@media screen and (max-width: 400px) {
+  .main-header {
+    padding: 10px 15px;
+  }
+
+  .login-container h1,
+  .register-container h1,
+  .add-story-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-group input,
+  textarea {
+    padding: 12px;
+  }
+
+  .primary-button {
+    padding: 12px;
+  }
+
+  .nav-list li a {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+}
