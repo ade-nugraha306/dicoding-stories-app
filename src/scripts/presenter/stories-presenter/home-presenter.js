@@ -60,10 +60,30 @@ export default class HomePagePresenter {
   
   initializeMapWithStories(stories) {
     try {
+      if (typeof L === 'undefined' || !L) {
+        console.error("Leaflet not available");
+        this.view.showOfflineMapMessage();
+        return;
+      }
+      
+      console.log("Initializing map with stories...");
+      
+      // Initialize map first
       this.view.initializeMap();
       
+      // Check if map was successfully initialized
+      if (!this.view.map) {
+        console.error("Map initialization failed");
+        return;
+      }
+      
+      // Add markers for stories with valid coordinates
+      let markersAdded = 0;
+      
       stories.forEach((story) => {
-        if (story.lat && story.lon) {
+        if (story && story.lat !== undefined && story.lon !== undefined && 
+            !isNaN(story.lat) && !isNaN(story.lon)) {
+          
           this.view.addMapMarker(
             story.lat,
             story.lon,
@@ -71,10 +91,20 @@ export default class HomePagePresenter {
             story.description,
             story.photoUrl
           );
+          
+          markersAdded++;
         }
       });
+      
+      console.log(`Added ${markersAdded} markers to map`);
+      
+      // If no markers were added, show a message
+      if (markersAdded === 0 && stories.length > 0) {
+        console.log("No stories with valid coordinates found");
+      }
     } catch (error) {
-      console.error("Error initializing map:", error);
+      console.error("Error initializing map with stories:", error);
+      this.view.showOfflineMapMessage();
     }
   }
   

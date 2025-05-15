@@ -81,51 +81,88 @@ export default class HomePage {
   }
 
   initializeMap() {
-    // Clear any offline message first
-    const mapContainer = document.getElementById("map");
-    if (mapContainer) {
+    try {
+      // Clear any offline message first
+      const mapContainer = document.getElementById("map");
+      if (!mapContainer) {
+        console.error("Map container not found!");
+        return;
+      }
+      
       mapContainer.innerHTML = '';
       mapContainer.style = ''; // Reset styles
-    }
-    
-    if (!window.L) {
-      console.error("Leaflet library not loaded!");
+      mapContainer.style.height = '400px'; // Ensure height is set
+      
+      // Wait for L (Leaflet) to be available
+      if (typeof L === 'undefined' || !L || !L.map) {
+        console.error("Leaflet library not loaded or not fully initialized!");
+        this.showOfflineMapMessage();
+        return;
+      }
+      
+      console.log("Initializing map with Leaflet");
+      
+      // Check if map is already initialized
+      if (this.map) {
+        try {
+          this.map.remove();
+          this.map = null;
+          console.log("Removed existing map instance");
+        } catch (error) {
+          console.error("Error removing existing map:", error);
+        }
+      }
+
+      // Create new map instance
+      this.map = L.map("map", {
+        worldCopyJump: false,
+        maxBounds: [
+          [-90, -180],
+          [90, 180],
+        ],
+        maxBoundsViscosity: 1.0,
+      }).setView([-2.5, 118], 5);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(this.map);
+      
+      console.log("Map initialized successfully");
+    } catch (error) {
+      console.error("Error in initializeMap:", error);
       this.showOfflineMapMessage();
-      return;
     }
-
-    this.map = L.map("map", {
-      worldCopyJump: false,
-      maxBounds: [
-        [-90, -180],
-        [90, 180],
-      ],
-      maxBoundsViscosity: 1.0,
-    }).setView([-2.5, 118], 5);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(this.map);
   }
 
   addMapMarker(lat, lng, title, description, photoUrl) {
-    if (!this.map) {
-      console.warn("Map not initialized - skipping marker");
-      return;
+    try {
+      if (!this.map) {
+        console.warn("Map not initialized - skipping marker");
+        return;
+      }
+      
+      if (!lat || !lng) {
+        console.warn("Invalid coordinates for marker:", lat, lng);
+        return;
+      }
+
+      console.log(`Adding marker at ${lat}, ${lng} for ${title}`);
+      const marker = L.marker([lat, lng]).addTo(this.map);
+
+      const popupContent = `
+          <div style="text-align: center;">
+            <img src="${photoUrl}" alt="${title}" style="width: 100px; height: auto; margin-bottom: 5px;" />
+            <h3>${title}</h3>
+            <p>${description}</p>
+          </div>
+        `;
+
+      marker.bindPopup(popupContent);
+    } catch (error) {
+      console.error("Error adding marker:", error);
     }
-
-    const marker = L.marker([lat, lng]).addTo(this.map);
-
-    const popupContent = `
-        <div style="text-align: center;">
-          <img src="${photoUrl}" alt="${title}" style="width: 100px; height: auto; margin-bottom: 5px;" />
-          <h3>${title}</h3>
-          <p>${description}</p>
-        </div>
-      `;
-
-    marker.bindPopup(popupContent);
   }
+
   updateLoginLink(isLoggedIn) {
     const loginLink = document.querySelector("#login-link");
 

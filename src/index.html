@@ -15,6 +15,27 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <!-- Check if Leaflet loaded properly -->
+    <script>
+      window.addEventListener('load', function() {
+        if (typeof L === 'undefined') {
+          console.error('Leaflet library failed to load! Trying to reload...');
+          
+          // Try to reload Leaflet
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+          script.crossOrigin = '';
+          script.onload = function() {
+            console.log('Leaflet library loaded successfully on retry');
+          };
+          document.head.appendChild(script);
+        } else {
+          console.log('Leaflet library loaded successfully');
+        }
+      });
+    </script>
 
     <script type="module" src="/scripts/index.js"></script>
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />

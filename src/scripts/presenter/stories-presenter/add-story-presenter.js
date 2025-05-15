@@ -5,21 +5,38 @@ export default class AddStoryPresenter {
     this.view = view;
     this.cameraStream = null;
     this.capturedPhotoBlob = null;
+    this.isOffline = !navigator.onLine;
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+      console.log('Add story page - Online status changed: ONLINE');
+      this.isOffline = false;
+      this.view.updateOfflineStatus(false);
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('Add story page - Online status changed: OFFLINE');
+      this.isOffline = true;
+      this.view.updateOfflineStatus(true);
+    });
   }
 
   async init() {
     try {
+      // Check offline status first
+      if (this.isOffline) {
+        this.view.updateOfflineStatus(true);
+      }
+      
       this.view.addCaptureButtonListener(
         this.handleCaptureButtonClick.bind(this)
       );
       this.view.addFormSubmitListener(this.handleFormSubmit.bind(this));
 
-      // Memulai akses kamera
-      const video = document.getElementById("camera-stream");
-      this.cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      video.srcObject = this.cameraStream;
+      // Init camera only if online
+      if (!this.isOffline) {
+        await this.initCamera();
+      }
 
       // Menangani unload halaman dengan beforeunload
       window.addEventListener("beforeunload", this.cleanupCamera.bind(this));
@@ -27,12 +44,31 @@ export default class AddStoryPresenter {
       // Jika menggunakan navigasi hash, bisa juga menggunakan hashchange
       window.addEventListener("hashchange", this.cleanupCamera.bind(this));
     } catch (error) {
+      console.error("Init error:", error);
+      this.view.showError("Terjadi kesalahan saat menginisialisasi halaman: " + error.message);
+    }
+  }
+  
+  async initCamera() {
+    try {
+      const video = document.getElementById("camera-stream");
+      this.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      video.srcObject = this.cameraStream;
+    } catch (error) {
       console.error("Camera access error:", error);
-      alert("Could not access camera. Please check permissions.");
+      this.view.showError("Tidak dapat mengakses kamera. Mohon periksa izin kamera anda.");
     }
   }
 
   handleCaptureButtonClick = async () => {
+    // Prevent capture if offline
+    if (this.isOffline) {
+      this.view.showError("Tidak dapat mengambil foto saat offline");
+      return;
+    }
+    
     try {
       // Capture photo
       this.capturedPhotoBlob = await this.view.capturePhoto();
@@ -52,13 +88,19 @@ export default class AddStoryPresenter {
       this.cleanupCamera();
     } catch (error) {
       console.error("Capture failed:", error);
-      alert("Gagal mengambil foto: " + error.message);
+      this.view.showError("Gagal mengambil foto: " + error.message);
       this.capturedPhotoBlob = null;
     }
   };
 
   handleFormSubmit = async (event) => {
     event.preventDefault();
+    
+    // Prevent submission if offline
+    if (this.isOffline) {
+      this.view.showError("Tidak dapat menambahkan story saat offline. Silakan coba lagi saat terhubung ke internet.");
+      return;
+    }
 
     try {
       const formData = this.view.getFormData();
@@ -69,7 +111,7 @@ export default class AddStoryPresenter {
       }
 
       // Memastikan ada foto yang diambil atau diupload
-      if (!formData.photo && !this.capturedPhotoBlob) {
+      if (!formData.photo) {
         throw new Error("Harap ambil foto atau upload gambar");
       }
 
@@ -80,11 +122,11 @@ export default class AddStoryPresenter {
         await StoryModel.addStoryGuest(formData);
       }
 
-      alert("Story berhasil ditambahkan!");
+      this.view.showSuccess("Story berhasil ditambahkan!");
       window.location.hash = "#/"; // Navigasi kembali ke halaman utama
     } catch (error) {
       console.error("Error:", error);
-      alert(`Gagal: ${error.message}`);
+      this.view.showError(`Gagal: ${error.message}`);
     }
   };
 

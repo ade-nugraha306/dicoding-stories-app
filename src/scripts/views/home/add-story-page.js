@@ -10,6 +10,14 @@ export default class AddStoryPage {
     return `
       <section class="container">
         <h1>Tambah Story</h1>
+        <div id="offline-warning" class="offline-notice" style="display:none;">
+          <h3>Mode Offline Terdeteksi</h3>
+          <p>Fitur tambah story tidak tersedia saat offline. Silakan sambungkan ke internet untuk menambahkan story baru.</p>
+        </div>
+        
+        <div id="error-container" class="error-message" style="display:none;"></div>
+        <div id="success-container" class="success-message" style="display:none;"></div>
+        
         <form id="add-story-form">
           <label for="description">Deskripsi:</label><br />
           <textarea id="description" placeholder="Deskripsi" required></textarea>
@@ -46,28 +54,110 @@ export default class AddStoryPage {
   async afterRender() {
     await this.presenter.init();
 
-    const map = L.map("map").setView([-6.2, 106.8], 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
+    // Check if we can initialize map (only if online)
+    if (!navigator.onLine) {
+      this.showOfflineMapMessage();
+      return;
+    }
 
-    let marker = null;
+    try {
+      const map = L.map("map").setView([-6.2, 106.8], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
 
-    map.on("click", (e) => {
-      const { lat, lng } = e.latlng;
-      document.getElementById("lat").value = lat.toFixed(6);
-      document.getElementById("lon").value = lng.toFixed(6);
+      let marker = null;
 
-      if (marker) {
-        marker.setLatLng([lat, lng]);
-      } else {
-        marker = L.marker([lat, lng]).addTo(map);
-      }
+      map.on("click", (e) => {
+        const { lat, lng } = e.latlng;
+        document.getElementById("lat").value = lat.toFixed(6);
+        document.getElementById("lon").value = lng.toFixed(6);
 
-      marker
-        .bindPopup(`Lat: ${lat.toFixed(6)}, Lon: ${lng.toFixed(6)}`)
-        .openPopup();
-    });
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+        } else {
+          marker = L.marker([lat, lng]).addTo(map);
+        }
+
+        marker
+          .bindPopup(`Lat: ${lat.toFixed(6)}, Lon: ${lng.toFixed(6)}`)
+          .openPopup();
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      this.showOfflineMapMessage();
+    }
+  }
+
+  updateOfflineStatus(isOffline) {
+    const offlineWarning = document.getElementById('offline-warning');
+    const form = document.getElementById('add-story-form');
+    const captureBtn = document.getElementById('capture-btn');
+    
+    if (isOffline) {
+      offlineWarning.style.display = 'block';
+      form.style.opacity = '0.5';
+      form.style.pointerEvents = 'none';
+      this.showOfflineMapMessage();
+    } else {
+      offlineWarning.style.display = 'none';
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+      // Try reinitializing camera
+      this.presenter.initCamera().catch(console.error);
+    }
+  }
+  
+  showOfflineMapMessage() {
+    const mapContainer = document.getElementById("map");
+    if (mapContainer) {
+      mapContainer.innerHTML = `
+        <div class="offline-map-message">
+          <h3>Map tidak tersedia dalam mode offline</h3>
+          <p>Koneksi internet diperlukan untuk menampilkan peta.</p>
+        </div>
+      `;
+      mapContainer.style.display = 'flex';
+      mapContainer.style.justifyContent = 'center';
+      mapContainer.style.alignItems = 'center';
+      mapContainer.style.backgroundColor = '#f8f9fa';
+      mapContainer.style.border = '1px solid #ddd';
+      mapContainer.style.borderRadius = '8px';
+      mapContainer.style.padding = '20px';
+      mapContainer.style.textAlign = 'center';
+    }
+  }
+  
+  showError(message) {
+    const errorContainer = document.getElementById('error-container');
+    if (errorContainer) {
+      errorContainer.textContent = message;
+      errorContainer.style.display = 'block';
+      
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        errorContainer.style.display = 'none';
+      }, 5000);
+    } else {
+      // Fallback to alert if container not found
+      alert(message);
+    }
+  }
+  
+  showSuccess(message) {
+    const successContainer = document.getElementById('success-container');
+    if (successContainer) {
+      successContainer.textContent = message;
+      successContainer.style.display = 'block';
+      
+      // Auto hide after 3 seconds
+      setTimeout(() => {
+        successContainer.style.display = 'none';
+      }, 3000);
+    } else {
+      // Fallback to alert if container not found
+      alert(message);
+    }
   }
 
   addCaptureButtonListener(listener) {
